@@ -396,7 +396,7 @@ const statusMessages = [
 		const renderMemoryTile = (index) => {
 			const tile = memoryTiles[index];
 			if (!tile) return;
-			const isFlipped = memoryFlipped.includes(index);
+			const isFlipped = memoryFlipped.includes(index) || memoryMatchedIndices.has(index);
 			if (isFlipped) {
 				tile.textContent = String(memoryValues[index]);
 				tile.classList.add('flipped');
