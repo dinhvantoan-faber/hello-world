@@ -49,7 +49,16 @@ const statusMessages = [
 
 			<p id="modeLabel" class="mode">Current mode: {jokeModes[0]}</p>
 
-			<section class="game-panel" aria-label="Bug Bash mini game">
+			<div class="game-selector">
+				<p class="selector-label">Pick a game:</p>
+				<div class="selector-buttons">
+					<button type="button" class="selector-btn active" data-game="game-1">Bug Bash</button>
+					<button type="button" class="selector-btn" data-game="game-2">Reflex Rally</button>
+					<button type="button" class="selector-btn" data-game="game-3">Memory Tiles</button>
+				</div>
+			</div>
+
+			<section id="game-1" class="game-panel game-container" aria-label="Bug Bash mini game">
 				<div class="game-head">
 					<h2>Bug Bash: 20s Challenge</h2>
 					<p>Click the moving BUG as many times as you can before time runs out.</p>
@@ -77,7 +86,7 @@ const statusMessages = [
 				<button id="gameStart" type="button" class="game-start">Start game</button>
 			</section>
 
-		<section class="game-panel-2" aria-label="Reflex Rally mini game">
+		<section id="game-2" class="game-panel-2 game-container" aria-label="Reflex Rally mini game" style="display: none;">
 			<div class="game-head">
 				<h2>Reflex Rally: 30s Sprint</h2>
 				<p>Click targets before they vanish! Each lasts ~1 second.</p>
@@ -105,7 +114,7 @@ const statusMessages = [
 			<button id="reflexStart" type="button" class="game-start">Start game</button>
 		</section>
 
-		<section class="game-panel-3" aria-label="Memory Tiles matching game">
+		<section id="game-3" class="game-panel-3 game-container" aria-label="Memory Tiles matching game" style="display: none;">
 			<div class="game-head">
 				<h2>Memory Tiles: Match Pairs</h2>
 				<p>Flip tiles to find matching pairs. Complete the grid to win!</p>
@@ -161,6 +170,8 @@ const statusMessages = [
 		const memoryMessageEl = document.querySelector('#memoryMessage');
 		const memoryStartBtn = document.querySelector('#memoryStart');
 		const memoryTiles = Array.from(document.querySelectorAll('.memory-tile'));
+		const selectorBtns = Array.from(document.querySelectorAll('.selector-btn'));
+		const gameContainers = Array.from(document.querySelectorAll('.game-container'));
 
 		let lineIndex = 0;
 		let modeIndex = 0;
@@ -449,6 +460,23 @@ const statusMessages = [
 		memoryStartBtn?.addEventListener('click', () => {
 			startMemory();
 		});
+
+		selectorBtns.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const targetGame = btn.getAttribute('data-game');
+				
+				selectorBtns.forEach(b => b.classList.remove('active'));
+				btn.classList.add('active');
+				
+				gameContainers.forEach(container => {
+					container.style.display = 'none';
+				});
+				const targetContainer = document.getElementById(targetGame);
+				if (targetContainer) {
+					targetContainer.style.display = 'block';
+				}
+			});
+		});
 	</script>
 </Layout>
 
@@ -560,6 +588,50 @@ const statusMessages = [
 		margin: 1rem 0 0;
 		font-weight: 700;
 		color: #21353a;
+	}
+
+	.game-selector {
+		margin: 1.2rem 0;
+		padding: 0.9rem;
+		border: 2px solid #222;
+		border-radius: 0.8rem;
+		background: rgba(255, 182, 70, 0.1);
+	}
+
+	.selector-label {
+		margin: 0 0 0.6rem;
+		font-weight: 700;
+		font-size: 0.95rem;
+		color: #1b1f23;
+	}
+
+	.selector-buttons {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.selector-btn {
+		flex: 1;
+		min-width: 100px;
+		padding: 0.6rem 0.9rem;
+		border: 2px solid #222;
+		background: #fff;
+		color: #1b1f23;
+		font-weight: 700;
+		font-size: 0.9rem;
+		border-radius: 0.6rem;
+		cursor: pointer;
+		transition: background 120ms ease, color 120ms ease;
+	}
+
+	.selector-btn:hover {
+		background: #f0f0f0;
+	}
+
+	.selector-btn.active {
+		background: #f85a3e;
+		color: #fff;
 	}
 
 	.game-panel {
@@ -747,6 +819,11 @@ const statusMessages = [
 		.memory-grid {
 			max-width: 100%;
 			grid-template-columns: repeat(4, 1fr);
+		}
+
+		.selector-btn {
+			flex: 1;
+			min-width: auto;
 		}
 	}
 </style>
