@@ -1,46 +1,44 @@
-# Astro Starter Kit: Basics
+# Funny Hello World with Astro
+
+A playful static site with rotating punchlines and joke modes, ready for GitHub Pages.
+
+## Run locally
 
 ```sh
-npm create astro@latest -- --template basics
+npm install
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Open http://localhost:4321
 
-## 🚀 Project Structure
+## Build
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+```sh
+npm run build
+npm run preview
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Deploy to GitHub Pages
 
-## 🧞 Commands
+1. Push this project to a GitHub repository.
+2. In GitHub, open Settings > Pages.
+3. Set Source to GitHub Actions.
+4. Push to main.
+5. The workflow in .github/workflows/deploy.yml deploys dist automatically.
 
-All commands are run from the root of the project, from a terminal:
+## Important setup note
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+In astro.config.mjs, update the site URL:
 
-## 👀 Want to learn more?
+```js
+site: 'https://YOUR-USERNAME.github.io',
+```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+The base path is auto-detected from GITHUB_REPOSITORY during GitHub Actions builds, so project repos and user repos both work.
+
+## Main files
+
+- src/pages/index.astro: funny landing page and interactions.
+- src/layouts/Layout.astro: shared document layout and page metadata.
+- astro.config.mjs: GitHub Pages aware site/base config.
+- .github/workflows/deploy.yml: CI workflow for automatic deployment.

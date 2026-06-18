@@ -1,11 +1,236 @@
----
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const jokeModes = [
+	'Pirate Build',
+	'Robot Debug',
+	'Corporate Buzz',
+	'Shakespeare Runtime',
+	'Cat Compiler',
+];
+
+const lines = [
+	'Hello, World. I wrote this before coffee. Bold choice.',
+	'Hello, World. 0 bugs reported. 37 bugs emotionally implied.',
+	'Hello, World. Shipping to prod in 3... 2... 404.',
+	'Hello, World. My rubber duck approved this commit.',
+	'Hello, World. Works on my machine, your honor.',
+	'Hello, World. Deployed with vibes and one suspicious semicolon.',
+	'Hello, World. The code is clean. The git history is not.',
+];
+
+const statusMessages = [
+	'Compiling stand-up routine...',
+	'Training AI to laugh at your puns...',
+	'Rendering sarcasm at 60fps...',
+	'Checking if this joke passed unit tests...',
+	'Optimizing punchline delivery...',
+];
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+	title="Funny Hello World | Astro"
+	description="A chaotic and funny Hello World site, ready for GitHub Pages."
+>
+	<main class="scene">
+		<section class="card">
+			<p class="tag">Live from the Internet</p>
+			<h1>hello world, but make it comedy</h1>
+			<p id="status" class="status">{statusMessages[0]}</p>
+
+			<div class="bubble-wrap" aria-live="polite">
+				<p id="line" class="line">{lines[0]}</p>
+			</div>
+
+			<div class="controls">
+				<button id="punch" type="button">Generate another punchline</button>
+				<button id="mode" type="button" class="ghost">Switch universe</button>
+			</div>
+
+			<p id="modeLabel" class="mode">Current mode: {jokeModes[0]}</p>
+		</section>
+	</main>
+
+	<script type="module" define:vars={{ lines, jokeModes, statusMessages }}>
+		const lineEl = document.querySelector('#line');
+		const modeLabelEl = document.querySelector('#modeLabel');
+		const statusEl = document.querySelector('#status');
+		const punchBtn = document.querySelector('#punch');
+		const modeBtn = document.querySelector('#mode');
+
+		let lineIndex = 0;
+		let modeIndex = 0;
+		let statusIndex = 0;
+
+		const nextIndex = (current, length) => (current + 1) % length;
+
+		const animatePop = (el) => {
+			if (!el) return;
+			el.classList.remove('pop');
+			void el.offsetWidth;
+			el.classList.add('pop');
+		};
+
+		const rotateStatus = () => {
+			statusIndex = nextIndex(statusIndex, statusMessages.length);
+			if (statusEl) {
+				statusEl.textContent = statusMessages[statusIndex];
+				animatePop(statusEl);
+			}
+		};
+
+		punchBtn?.addEventListener('click', () => {
+			lineIndex = nextIndex(lineIndex, lines.length);
+			if (lineEl) {
+				lineEl.textContent = lines[lineIndex];
+				animatePop(lineEl);
+			}
+			rotateStatus();
+		});
+
+		modeBtn?.addEventListener('click', () => {
+			modeIndex = nextIndex(modeIndex, jokeModes.length);
+			if (modeLabelEl) {
+				modeLabelEl.textContent = `Current mode: ${jokeModes[modeIndex]}`;
+				animatePop(modeLabelEl);
+			}
+			rotateStatus();
+		});
+	</script>
 </Layout>
+
+<style>
+	:root {
+		--paper: #f6f1e8;
+		--ink: #1b1f23;
+		--sun: #ffb646;
+		--tomato: #f85a3e;
+		--mint: #6bc8a8;
+		--card: #fffdf8;
+		--shadow: rgba(27, 31, 35, 0.17);
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	main.scene {
+		min-height: 100dvh;
+		display: grid;
+		place-items: center;
+		padding: 2rem 1rem;
+		font-family: 'Trebuchet MS', 'Gill Sans', 'Gill Sans MT', Calibri, sans-serif;
+		color: var(--ink);
+		background:
+			radial-gradient(circle at 15% 15%, rgba(255, 182, 70, 0.55), transparent 45%),
+			radial-gradient(circle at 85% 15%, rgba(107, 200, 168, 0.45), transparent 38%),
+			radial-gradient(circle at 20% 85%, rgba(248, 90, 62, 0.4), transparent 42%),
+			linear-gradient(165deg, #fdf7ec 0%, #f6f1e8 100%);
+	}
+
+	.card {
+		width: min(760px, 100%);
+		padding: clamp(1.2rem, 4vw, 2.2rem);
+		border-radius: 1.2rem;
+		background: var(--card);
+		border: 3px solid #222;
+		box-shadow: 8px 8px 0 var(--shadow);
+	}
+
+	.tag {
+		display: inline-block;
+		font-weight: 700;
+		background: var(--sun);
+		padding: 0.3rem 0.65rem;
+		border: 2px solid #222;
+		border-radius: 999px;
+		margin: 0;
+	}
+
+	h1 {
+		font-size: clamp(1.9rem, 5.2vw, 3rem);
+		line-height: 1.05;
+		letter-spacing: 0.01em;
+		margin: 0.9rem 0;
+		text-wrap: balance;
+	}
+
+	.status {
+		margin: 0;
+		font-weight: 700;
+		color: #5f4a2f;
+	}
+
+	.bubble-wrap {
+		margin-top: 1rem;
+		padding: 1rem;
+		border: 2px dashed #222;
+		border-radius: 0.8rem;
+		background: #fff;
+	}
+
+	.line {
+		margin: 0;
+		font-size: clamp(1.15rem, 2.7vw, 1.55rem);
+		font-weight: 700;
+	}
+
+	.controls {
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 1rem;
+		flex-wrap: wrap;
+	}
+
+	button {
+		border: 2px solid #222;
+		background: var(--tomato);
+		color: #fff;
+		font-size: 0.97rem;
+		font-weight: 700;
+		padding: 0.7rem 1rem;
+		border-radius: 0.65rem;
+		cursor: pointer;
+		transition: transform 120ms ease;
+	}
+
+	button:hover {
+		transform: translateY(-2px);
+	}
+
+	button.ghost {
+		background: var(--mint);
+		color: #1f2427;
+	}
+
+	.mode {
+		margin: 1rem 0 0;
+		font-weight: 700;
+		color: #21353a;
+	}
+
+	.pop {
+		animation: pop 320ms ease;
+	}
+
+	@keyframes pop {
+		0% {
+			transform: scale(0.97);
+			opacity: 0.5;
+		}
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+
+	@media (max-width: 560px) {
+		.card {
+			padding: 1rem;
+			border-radius: 1rem;
+		}
+
+		button {
+			width: 100%;
+		}
+	}
+</style>
