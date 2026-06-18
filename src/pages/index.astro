@@ -197,6 +197,7 @@ const statusMessages = [
 		let memoryMatched = 0;
 		let memoryMoves = 0;
 		let memoryCanFlip = true;
+		let memoryMatchedIndices = new Set();
 
 		const nextIndex = (current, length) => (current + 1) % length;
 
@@ -410,8 +411,13 @@ const statusMessages = [
 			const [idx1, idx2] = memoryFlipped;
 			if (memoryValues[idx1] === memoryValues[idx2]) {
 				memoryMatched += 1;
+				memoryMatchedIndices.add(idx1);
+				memoryMatchedIndices.add(idx2);
+				memoryTiles[idx1].classList.add('matched');
+				memoryTiles[idx2].classList.add('matched');
 				if (memoryMatchedEl) memoryMatchedEl.textContent = String(memoryMatched);
 				memoryFlipped = [];
+				memoryCanFlip = true;
 				if (memoryMatched === 8) {
 					if (memoryMessageEl) {
 						memoryMessageEl.textContent = `🎉 You won in ${memoryMoves} moves!`;
@@ -435,18 +441,20 @@ const statusMessages = [
 			memoryMatched = 0;
 			memoryMoves = 0;
 			memoryCanFlip = true;
+			memoryMatchedIndices.clear();
 			if (memoryMovesEl) memoryMovesEl.textContent = '0';
 			if (memoryMatchedEl) memoryMatchedEl.textContent = '0/8';
 			if (memoryMessageEl) memoryMessageEl.textContent = 'Flip tiles to find pairs!';
 			memoryTiles.forEach((tile, index) => {
 				tile.textContent = '?';
 				tile.classList.remove('flipped');
+				tile.classList.remove('matched');
 			});
 		};
 
 		memoryTiles.forEach((tile, index) => {
 			tile.addEventListener('click', () => {
-				if (!memoryCanFlip || memoryFlipped.includes(index)) return;
+				if (!memoryCanFlip || memoryFlipped.includes(index) || memoryMatchedIndices.has(index)) return;
 				memoryFlipped.push(index);
 				renderMemoryTile(index);
 				if (memoryFlipped.length === 2) {
@@ -755,32 +763,113 @@ const statusMessages = [
 	.memory-grid {
 		display: grid;
 		grid-template-columns: repeat(4, minmax(52px, 1fr));
-		gap: 0.5rem;
-		max-width: 360px;
+		gap: 0.6rem;
+		max-width: 380px;
+		perspective: 1000px;
 	}
 
 	.memory-grid .memory-tile {
 		aspect-ratio: 1;
 		padding: 0;
 		margin: 0;
-		font-size: 1.2rem;
-		font-weight: 800;
+		font-size: 1.4rem;
+		font-weight: 900;
 		background: linear-gradient(135deg, #f85a3e 0%, #ff6b4a 100%);
 		color: #fff;
 		border: 2px solid #222;
-		border-radius: 0.6rem;
+		border-radius: 0.8rem;
 		cursor: pointer;
-		transition: transform 80ms ease, box-shadow 80ms ease;
+		transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), 
+		            box-shadow 140ms ease,
+		            background 200ms ease,
+		            color 200ms ease;
+		box-shadow: 
+			inset 0 1px 0 rgba(255, 255, 255, 0.3),
+			0 4px 0 rgba(0, 0, 0, 0.15),
+			0 0 0 0 rgba(248, 90, 62, 0);
+		position: relative;
 	}
 
-	.memory-grid .memory-tile:hover {
-		transform: scale(1.05);
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	.memory-grid .memory-tile:hover:not(.matched):not(.flipped) {
+		transform: translateY(-4px);
+		box-shadow: 
+			inset 0 1px 0 rgba(255, 255, 255, 0.3),
+			0 6px 8px rgba(0, 0, 0, 0.2),
+			0 0 12px rgba(248, 90, 62, 0.4);
+	}
+
+	.memory-grid .memory-tile:active:not(.matched) {
+		transform: translateY(-1px);
+		box-shadow: 
+			inset 0 1px 0 rgba(255, 255, 255, 0.3),
+			0 2px 4px rgba(0, 0, 0, 0.1),
+			0 0 8px rgba(248, 90, 62, 0.3);
 	}
 
 	.memory-grid .memory-tile.flipped {
-		background: #6bc8a8;
+		background: linear-gradient(135deg, #6bc8a8 0%, #5ab896 100%);
 		color: #fff;
+		animation: flipCard 600ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+		box-shadow: 
+			inset 0 1px 0 rgba(255, 255, 255, 0.2),
+			0 4px 0 rgba(0, 0, 0, 0.15),
+			0 0 0 0 rgba(107, 200, 168, 0);
+	}
+
+	.memory-grid .memory-tile.matched {
+		background: linear-gradient(135deg, #5ab896 0%, #48a882 100%);
+		color: #fff;
+		cursor: not-allowed;
+		opacity: 0.8;
+		box-shadow: 
+			inset 0 1px 0 rgba(255, 255, 255, 0.2),
+			0 0 0 2px #6bc8a8,
+			0 0 16px rgba(107, 200, 168, 0.5),
+			0 0 24px rgba(107, 200, 168, 0.3),
+			inset 0 0 8px rgba(255, 255, 255, 0.1);
+		animation: matchPulse 600ms ease;
+	}
+
+	@keyframes flipCard {
+		0% {
+			transform: rotateY(0deg) translateY(0);
+		}
+		50% {
+			transform: rotateY(90deg) translateY(0);
+		}
+		100% {
+			transform: rotateY(0deg) translateY(0);
+		}
+	}
+
+	@keyframes matchPulse {
+		0% {
+			transform: scale(1);
+			box-shadow: 
+				inset 0 1px 0 rgba(255, 255, 255, 0.2),
+				0 0 0 2px #6bc8a8,
+				0 0 16px rgba(107, 200, 168, 0.5),
+				0 0 24px rgba(107, 200, 168, 0.3),
+				inset 0 0 8px rgba(255, 255, 255, 0.1);
+		}
+		50% {
+			transform: scale(1.12);
+			box-shadow: 
+				inset 0 1px 0 rgba(255, 255, 255, 0.2),
+				0 0 0 4px #6bc8a8,
+				0 0 24px rgba(107, 200, 168, 0.8),
+				0 0 32px rgba(107, 200, 168, 0.5),
+				inset 0 0 12px rgba(255, 255, 255, 0.15);
+		}
+		100% {
+			transform: scale(1);
+			box-shadow: 
+				inset 0 1px 0 rgba(255, 255, 255, 0.2),
+				0 0 0 2px #6bc8a8,
+				0 0 16px rgba(107, 200, 168, 0.5),
+				0 0 24px rgba(107, 200, 168, 0.3),
+				inset 0 0 8px rgba(255, 255, 255, 0.1);
+		}
 	}
 
 	.pop {
@@ -819,6 +908,7 @@ const statusMessages = [
 		.memory-grid {
 			max-width: 100%;
 			grid-template-columns: repeat(4, 1fr);
+			gap: 0.5rem;
 		}
 
 		.selector-btn {
