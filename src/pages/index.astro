@@ -104,6 +104,40 @@ const statusMessages = [
 			<p id="reflexMessage" class="game-message">Ready? Click Start.</p>
 			<button id="reflexStart" type="button" class="game-start">Start game</button>
 		</section>
+
+		<section class="game-panel-3" aria-label="Memory Tiles matching game">
+			<div class="game-head">
+				<h2>Memory Tiles: Match Pairs</h2>
+				<p>Flip tiles to find matching pairs. Complete the grid to win!</p>
+			</div>
+
+			<div class="game-stats">
+				<p>Moves: <span id="memoryMoves">0</span></p>
+				<p>Matched: <span id="memoryMatched">0</span>/8</p>
+			</div>
+
+			<div id="memoryGrid" class="memory-grid" role="group" aria-label="Memory game board">
+				<button type="button" class="memory-tile" data-tile="0"></button>
+				<button type="button" class="memory-tile" data-tile="1"></button>
+				<button type="button" class="memory-tile" data-tile="2"></button>
+				<button type="button" class="memory-tile" data-tile="3"></button>
+				<button type="button" class="memory-tile" data-tile="4"></button>
+				<button type="button" class="memory-tile" data-tile="5"></button>
+				<button type="button" class="memory-tile" data-tile="6"></button>
+				<button type="button" class="memory-tile" data-tile="7"></button>
+				<button type="button" class="memory-tile" data-tile="8"></button>
+				<button type="button" class="memory-tile" data-tile="9"></button>
+				<button type="button" class="memory-tile" data-tile="10"></button>
+				<button type="button" class="memory-tile" data-tile="11"></button>
+				<button type="button" class="memory-tile" data-tile="12"></button>
+				<button type="button" class="memory-tile" data-tile="13"></button>
+				<button type="button" class="memory-tile" data-tile="14"></button>
+				<button type="button" class="memory-tile" data-tile="15"></button>
+			</div>
+
+			<p id="memoryMessage" class="game-message">Click to start flipping!</p>
+			<button id="memoryStart" type="button" class="game-start">New game</button>
+		</section>
 	<script type="module" define:vars={{ lines, jokeModes, statusMessages }}>
 		const lineEl = document.querySelector('#line');
 		const modeLabelEl = document.querySelector('#modeLabel');
@@ -122,6 +156,11 @@ const statusMessages = [
 		const reflexMessageEl = document.querySelector('#reflexMessage');
 		const reflexStartBtn = document.querySelector('#reflexStart');
 		const reflexTargets = Array.from(document.querySelectorAll('.target'));
+		const memoryMovesEl = document.querySelector('#memoryMoves');
+		const memoryMatchedEl = document.querySelector('#memoryMatched');
+		const memoryMessageEl = document.querySelector('#memoryMessage');
+		const memoryStartBtn = document.querySelector('#memoryStart');
+		const memoryTiles = Array.from(document.querySelectorAll('.memory-tile'));
 
 		let lineIndex = 0;
 		let modeIndex = 0;
@@ -141,6 +180,12 @@ const statusMessages = [
 		let reflexCountdownId;
 		let reflexTargetId;
 		let reflexHideId;
+
+		let memoryValues = [];
+		let memoryFlipped = [];
+		let memoryMatched = 0;
+		let memoryMoves = 0;
+		let memoryCanFlip = true;
 
 		const nextIndex = (current, length) => (current + 1) % length;
 
@@ -323,6 +368,86 @@ const statusMessages = [
 		reflexStartBtn?.addEventListener('click', () => {
 			if (reflexRunning) return;
 			startReflexGame();
+		});
+
+		const initMemory = () => {
+			memoryValues = [];
+			for (let i = 1; i <= 8; i++) {
+				memoryValues.push(i, i);
+			}
+			for (let i = memoryValues.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[memoryValues[i], memoryValues[j]] = [memoryValues[j], memoryValues[i]];
+			}
+		};
+
+		const renderMemoryTile = (index) => {
+			const tile = memoryTiles[index];
+			if (!tile) return;
+			const isFlipped = memoryFlipped.includes(index);
+			if (isFlipped) {
+				tile.textContent = String(memoryValues[index]);
+				tile.classList.add('flipped');
+			} else {
+				tile.textContent = '?';
+				tile.classList.remove('flipped');
+			}
+		};
+
+		const checkMemoryMatch = () => {
+			if (memoryFlipped.length !== 2) return;
+			const [idx1, idx2] = memoryFlipped;
+			if (memoryValues[idx1] === memoryValues[idx2]) {
+				memoryMatched += 1;
+				if (memoryMatchedEl) memoryMatchedEl.textContent = String(memoryMatched);
+				memoryFlipped = [];
+				if (memoryMatched === 8) {
+					if (memoryMessageEl) {
+						memoryMessageEl.textContent = `🎉 You won in ${memoryMoves} moves!`;
+					}
+					memoryCanFlip = false;
+				}
+			} else {
+				memoryCanFlip = false;
+				setTimeout(() => {
+					renderMemoryTile(idx1);
+					renderMemoryTile(idx2);
+					memoryFlipped = [];
+					memoryCanFlip = true;
+				}, 800);
+			}
+		};
+
+		const startMemory = () => {
+			initMemory();
+			memoryFlipped = [];
+			memoryMatched = 0;
+			memoryMoves = 0;
+			memoryCanFlip = true;
+			if (memoryMovesEl) memoryMovesEl.textContent = '0';
+			if (memoryMatchedEl) memoryMatchedEl.textContent = '0/8';
+			if (memoryMessageEl) memoryMessageEl.textContent = 'Flip tiles to find pairs!';
+			memoryTiles.forEach((tile, index) => {
+				tile.textContent = '?';
+				tile.classList.remove('flipped');
+			});
+		};
+
+		memoryTiles.forEach((tile, index) => {
+			tile.addEventListener('click', () => {
+				if (!memoryCanFlip || memoryFlipped.includes(index)) return;
+				memoryFlipped.push(index);
+				renderMemoryTile(index);
+				if (memoryFlipped.length === 2) {
+					memoryMoves += 1;
+					if (memoryMovesEl) memoryMovesEl.textContent = String(memoryMoves);
+					checkMemoryMatch();
+				}
+			});
+		});
+
+		memoryStartBtn?.addEventListener('click', () => {
+			startMemory();
 		});
 	</script>
 </Layout>
@@ -538,6 +663,54 @@ const statusMessages = [
 		box-shadow: 0 0 0 3px rgba(107, 200, 168, 0.3);
 	}
 
+	.game-panel-3 {
+		margin-top: 1.25rem;
+		padding-top: 1.2rem;
+		border-top: 2px solid #222;
+	}
+
+	.game-panel-3 .game-head h2 {
+		font-size: clamp(1.1rem, 2.8vw, 1.5rem);
+		margin: 0;
+	}
+
+	.game-panel-3 .game-head p {
+		margin: 0.35rem 0 0;
+		color: #4f4740;
+		font-weight: 600;
+	}
+
+	.memory-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(52px, 1fr));
+		gap: 0.5rem;
+		max-width: 360px;
+	}
+
+	.memory-grid .memory-tile {
+		aspect-ratio: 1;
+		padding: 0;
+		margin: 0;
+		font-size: 1.2rem;
+		font-weight: 800;
+		background: linear-gradient(135deg, #f85a3e 0%, #ff6b4a 100%);
+		color: #fff;
+		border: 2px solid #222;
+		border-radius: 0.6rem;
+		cursor: pointer;
+		transition: transform 80ms ease, box-shadow 80ms ease;
+	}
+
+	.memory-grid .memory-tile:hover {
+		transform: scale(1.05);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	}
+
+	.memory-grid .memory-tile.flipped {
+		background: #6bc8a8;
+		color: #fff;
+	}
+
 	.pop {
 		animation: pop 320ms ease;
 	}
@@ -569,6 +742,11 @@ const statusMessages = [
 
 		.game-grid .cell {
 			width: 100%;
+		}
+
+		.memory-grid {
+			max-width: 100%;
+			grid-template-columns: repeat(4, 1fr);
 		}
 	}
 </style>
