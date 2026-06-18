@@ -76,9 +76,34 @@ const statusMessages = [
 				<p id="gameMessage" class="game-message">Press Start to play.</p>
 				<button id="gameStart" type="button" class="game-start">Start game</button>
 			</section>
-		</section>
-	</main>
 
+		<section class="game-panel-2" aria-label="Reflex Rally mini game">
+			<div class="game-head">
+				<h2>Reflex Rally: 30s Sprint</h2>
+				<p>Click targets before they vanish! Each lasts ~1 second.</p>
+			</div>
+
+			<div class="game-stats">
+				<p>Time: <span id="reflexTime">30</span>s</p>
+				<p>Score: <span id="reflexScore">0</span></p>
+				<p>Best: <span id="reflexBest">0</span></p>
+			</div>
+
+			<div id="reflexGrid" class="game-grid" role="group" aria-label="Reflex game board">
+				<button type="button" class="target" data-target="0"></button>
+				<button type="button" class="target" data-target="1"></button>
+				<button type="button" class="target" data-target="2"></button>
+				<button type="button" class="target" data-target="3"></button>
+				<button type="button" class="target" data-target="4"></button>
+				<button type="button" class="target" data-target="5"></button>
+				<button type="button" class="target" data-target="6"></button>
+				<button type="button" class="target" data-target="7"></button>
+				<button type="button" class="target" data-target="8"></button>
+			</div>
+
+			<p id="reflexMessage" class="game-message">Ready? Click Start.</p>
+			<button id="reflexStart" type="button" class="game-start">Start game</button>
+		</section>
 	<script type="module" define:vars={{ lines, jokeModes, statusMessages }}>
 		const lineEl = document.querySelector('#line');
 		const modeLabelEl = document.querySelector('#modeLabel');
@@ -91,6 +116,12 @@ const statusMessages = [
 		const gameMessageEl = document.querySelector('#gameMessage');
 		const gameStartBtn = document.querySelector('#gameStart');
 		const gameCells = Array.from(document.querySelectorAll('.cell'));
+		const reflexTimeEl = document.querySelector('#reflexTime');
+		const reflexScoreEl = document.querySelector('#reflexScore');
+		const reflexBestEl = document.querySelector('#reflexBest');
+		const reflexMessageEl = document.querySelector('#reflexMessage');
+		const reflexStartBtn = document.querySelector('#reflexStart');
+		const reflexTargets = Array.from(document.querySelectorAll('.target'));
 
 		let lineIndex = 0;
 		let modeIndex = 0;
@@ -102,6 +133,14 @@ const statusMessages = [
 		let gameRunning = false;
 		let countdownId;
 		let bugMoveId;
+
+		let reflexScore = 0;
+		let reflexBest = 0;
+		let reflexTime = 30;
+		let reflexRunning = false;
+		let reflexCountdownId;
+		let reflexTargetId;
+		let reflexHideId;
 
 		const nextIndex = (current, length) => (current + 1) % length;
 
@@ -212,6 +251,78 @@ const statusMessages = [
 		gameStartBtn?.addEventListener('click', () => {
 			if (gameRunning) return;
 			startGame();
+		});
+
+		const showTarget = () => {
+			reflexTargets.forEach(t => t.classList.remove('active'));
+			const nextTarget = Math.floor(Math.random() * reflexTargets.length);
+			reflexTargets[nextTarget].classList.add('active');
+
+			clearTimeout(reflexHideId);
+			reflexHideId = setTimeout(() => {
+				reflexTargets[nextTarget].classList.remove('active');
+				if (reflexRunning) {
+					reflexTargetId = setTimeout(showTarget, 400);
+				}
+			}, 900);
+		};
+
+		const stopReflexGame = () => {
+			reflexRunning = false;
+			clearInterval(reflexCountdownId);
+			clearTimeout(reflexTargetId);
+			clearTimeout(reflexHideId);
+			reflexTargets.forEach(t => t.classList.remove('active'));
+			if (reflexStartBtn) reflexStartBtn.textContent = 'Play again';
+			if (reflexMessageEl) {
+				reflexMessageEl.textContent = `Time! Final score: ${reflexScore}.`;
+			}
+		};
+
+		const startReflexGame = () => {
+			reflexRunning = true;
+			reflexScore = 0;
+			reflexTime = 30;
+			if (reflexScoreEl) reflexScoreEl.textContent = String(reflexScore);
+			if (reflexTimeEl) reflexTimeEl.textContent = String(reflexTime);
+			if (reflexMessageEl) reflexMessageEl.textContent = 'Targets appear! Click fast!';
+			if (reflexStartBtn) reflexStartBtn.textContent = 'Running...';
+
+			reflexTargets.forEach(t => t.classList.remove('active'));
+			showTarget();
+
+			clearInterval(reflexCountdownId);
+			reflexCountdownId = setInterval(() => {
+				reflexTime -= 1;
+				if (reflexTimeEl) reflexTimeEl.textContent = String(reflexTime);
+				if (reflexTime <= 0) {
+					stopReflexGame();
+				}
+			}, 1000);
+		};
+
+		reflexTargets.forEach((target, index) => {
+			target.addEventListener('click', () => {
+				if (!reflexRunning) return;
+				if (target.classList.contains('active')) {
+					reflexScore += 1;
+					if (reflexScore > reflexBest) {
+						reflexBest = reflexScore;
+						if (reflexBestEl) reflexBestEl.textContent = String(reflexBest);
+					}
+					if (reflexScoreEl) reflexScoreEl.textContent = String(reflexScore);
+					target.classList.remove('active');
+					clearTimeout(reflexHideId);
+					if (reflexRunning) {
+						reflexTargetId = setTimeout(showTarget, 200);
+					}
+				}
+			});
+		});
+
+		reflexStartBtn?.addEventListener('click', () => {
+			if (reflexRunning) return;
+			startReflexGame();
 		});
 	</script>
 </Layout>
@@ -390,6 +501,41 @@ const statusMessages = [
 
 	.game-start {
 		margin-top: 0.65rem;
+	}
+
+	.game-panel-2 {
+		margin-top: 1.25rem;
+		padding-top: 1.2rem;
+		border-top: 2px solid #222;
+	}
+
+	.game-panel-2 .game-head h2 {
+		font-size: clamp(1.1rem, 2.8vw, 1.5rem);
+		margin: 0;
+	}
+
+	.game-panel-2 .game-head p {
+		margin: 0.35rem 0 0;
+		color: #4f4740;
+		font-weight: 600;
+	}
+
+	.target {
+		aspect-ratio: 1;
+		padding: 0;
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 800;
+		background: #f0f0f0;
+		color: #999;
+		transition: background 60ms ease, color 60ms ease, transform 60ms ease;
+	}
+
+	.target.active {
+		background: #6bc8a8;
+		color: #fff;
+		transform: scale(1.06);
+		box-shadow: 0 0 0 3px rgba(107, 200, 168, 0.3);
 	}
 
 	.pop {
