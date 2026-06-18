@@ -48,6 +48,34 @@ const statusMessages = [
 			</div>
 
 			<p id="modeLabel" class="mode">Current mode: {jokeModes[0]}</p>
+
+			<section class="game-panel" aria-label="Bug Bash mini game">
+				<div class="game-head">
+					<h2>Bug Bash: 20s Challenge</h2>
+					<p>Click the moving BUG as many times as you can before time runs out.</p>
+				</div>
+
+				<div class="game-stats">
+					<p>Time: <span id="gameTime">20</span>s</p>
+					<p>Score: <span id="gameScore">0</span></p>
+					<p>Best: <span id="gameBest">0</span></p>
+				</div>
+
+				<div id="gameGrid" class="game-grid" role="group" aria-label="Game board">
+					<button type="button" class="cell" data-cell="0">...</button>
+					<button type="button" class="cell" data-cell="1">...</button>
+					<button type="button" class="cell" data-cell="2">...</button>
+					<button type="button" class="cell" data-cell="3">...</button>
+					<button type="button" class="cell" data-cell="4">...</button>
+					<button type="button" class="cell" data-cell="5">...</button>
+					<button type="button" class="cell" data-cell="6">...</button>
+					<button type="button" class="cell" data-cell="7">...</button>
+					<button type="button" class="cell" data-cell="8">...</button>
+				</div>
+
+				<p id="gameMessage" class="game-message">Press Start to play.</p>
+				<button id="gameStart" type="button" class="game-start">Start game</button>
+			</section>
 		</section>
 	</main>
 
@@ -57,10 +85,23 @@ const statusMessages = [
 		const statusEl = document.querySelector('#status');
 		const punchBtn = document.querySelector('#punch');
 		const modeBtn = document.querySelector('#mode');
+		const gameTimeEl = document.querySelector('#gameTime');
+		const gameScoreEl = document.querySelector('#gameScore');
+		const gameBestEl = document.querySelector('#gameBest');
+		const gameMessageEl = document.querySelector('#gameMessage');
+		const gameStartBtn = document.querySelector('#gameStart');
+		const gameCells = Array.from(document.querySelectorAll('.cell'));
 
 		let lineIndex = 0;
 		let modeIndex = 0;
 		let statusIndex = 0;
+		let gameScore = 0;
+		let gameBest = 0;
+		let gameTime = 20;
+		let bugCell = -1;
+		let gameRunning = false;
+		let countdownId;
+		let bugMoveId;
 
 		const nextIndex = (current, length) => (current + 1) % length;
 
@@ -95,6 +136,82 @@ const statusMessages = [
 				animatePop(modeLabelEl);
 			}
 			rotateStatus();
+		});
+
+		const renderBug = () => {
+			gameCells.forEach((cell, index) => {
+				const isBug = index === bugCell;
+				cell.textContent = isBug ? 'BUG' : '...';
+				cell.classList.toggle('is-bug', isBug);
+			});
+		};
+
+		const moveBug = () => {
+			let nextBug = Math.floor(Math.random() * gameCells.length);
+			if (gameCells.length > 1 && nextBug === bugCell) {
+				nextBug = (nextBug + 1) % gameCells.length;
+			}
+			bugCell = nextBug;
+			renderBug();
+		};
+
+		const stopGame = () => {
+			gameRunning = false;
+			clearInterval(countdownId);
+			clearInterval(bugMoveId);
+			bugCell = -1;
+			renderBug();
+			if (gameStartBtn) gameStartBtn.textContent = 'Play again';
+			if (gameMessageEl) {
+				gameMessageEl.textContent = `Time! Final score: ${gameScore}.`;
+			}
+		};
+
+		const startGame = () => {
+			gameRunning = true;
+			gameScore = 0;
+			gameTime = 20;
+			if (gameScoreEl) gameScoreEl.textContent = String(gameScore);
+			if (gameTimeEl) gameTimeEl.textContent = String(gameTime);
+			if (gameMessageEl) gameMessageEl.textContent = 'Go! Smash that bug.';
+			if (gameStartBtn) gameStartBtn.textContent = 'Running...';
+
+			moveBug();
+
+			clearInterval(countdownId);
+			clearInterval(bugMoveId);
+
+			countdownId = setInterval(() => {
+				gameTime -= 1;
+				if (gameTimeEl) gameTimeEl.textContent = String(gameTime);
+				if (gameTime <= 0) {
+					stopGame();
+				}
+			}, 1000);
+
+			bugMoveId = setInterval(() => {
+				if (gameRunning) moveBug();
+			}, 700);
+		};
+
+		gameCells.forEach((cell, index) => {
+			cell.addEventListener('click', () => {
+				if (!gameRunning) return;
+				if (index === bugCell) {
+					gameScore += 1;
+					if (gameScore > gameBest) {
+						gameBest = gameScore;
+						if (gameBestEl) gameBestEl.textContent = String(gameBest);
+					}
+					if (gameScoreEl) gameScoreEl.textContent = String(gameScore);
+					moveBug();
+				}
+			});
+		});
+
+		gameStartBtn?.addEventListener('click', () => {
+			if (gameRunning) return;
+			startGame();
 		});
 	</script>
 </Layout>
@@ -209,6 +326,72 @@ const statusMessages = [
 		color: #21353a;
 	}
 
+	.game-panel {
+		margin-top: 1.25rem;
+		padding-top: 1.2rem;
+		border-top: 2px solid #222;
+	}
+
+	.game-head h2 {
+		font-size: clamp(1.1rem, 2.8vw, 1.5rem);
+		margin: 0;
+	}
+
+	.game-head p {
+		margin: 0.35rem 0 0;
+		color: #4f4740;
+		font-weight: 600;
+	}
+
+	.game-stats {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.8rem;
+		margin: 0.9rem 0;
+	}
+
+	.game-stats p {
+		margin: 0;
+		padding: 0.35rem 0.6rem;
+		border: 2px solid #222;
+		border-radius: 0.6rem;
+		background: #fff;
+		font-weight: 700;
+	}
+
+	.game-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(62px, 1fr));
+		gap: 0.55rem;
+		max-width: 360px;
+	}
+
+	.game-grid .cell {
+		aspect-ratio: 1;
+		padding: 0;
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 800;
+		background: #fff;
+		color: #1b1f23;
+	}
+
+	.game-grid .cell.is-bug {
+		background: #f85a3e;
+		color: #fff;
+		transform: scale(1.04);
+	}
+
+	.game-message {
+		margin: 0.85rem 0 0;
+		font-weight: 700;
+		color: #4a3f34;
+	}
+
+	.game-start {
+		margin-top: 0.65rem;
+	}
+
 	.pop {
 		animation: pop 320ms ease;
 	}
@@ -231,6 +414,14 @@ const statusMessages = [
 		}
 
 		button {
+			width: 100%;
+		}
+
+		.game-grid {
+			max-width: 100%;
+		}
+
+		.game-grid .cell {
 			width: 100%;
 		}
 	}
